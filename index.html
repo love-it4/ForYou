@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caça Palavras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .word-search {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            grid-template-rows: repeat(10, 30px);
+            gap: 5px;
+        }
+        .word-search div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .word-search div.active {
+            background-color: yellow;
+        }
+        .word-search div.correct {
+            background-color: green;
+            color: white;
+        }
+        .found-words {
+            margin-top: 20px;
+        }
+        .found-words li {
+            text-decoration: none;
+        }
+        .found-words li.found {
+            text-decoration: line-through;
+        }
+        .hidden-text {
+            display: none;
+            margin-top: 20px;
+        }
+        .hidden-text.visible {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        span {
+    font-weight: bold;
+    font-family: 'Arial', sans-serif; /* Substitua 'Arial' pela fonte desejada */
+}
+
+    </style>
+</head>
+<body>
+    <span>*cada palavra nova que você encontrar, 
+    </span><span>será uma nova menssagem desbloqueada</span><br>
+    <span>para jogar, clique nas letras..</span><br>
+    <div class="word-search">
+        <!-- Aqui vão as letras do caça-palavras -->
+    </div>
+    <ul class="found-words">
+        <li data-word="duck">duck</li>
+        <li data-word="duda">duda</li>
+        <li data-word="linda">linda</li>
+        <li data-word="muito">muito</li>
+        <li data-word="casar">casar</li>
+        <li data-word="buceta" style="display: none;"></li>
+    </ul>
+    <div id="hidden-duck" class="hidden-text">Me chamam assim, mas você pode chamar como quiser.</div>
+    <div id="hidden-duda" class="hidden-text">Minha pessoa favorita hehe</div>
+    <div id="hidden-linda" class="hidden-text">É o que você é.</div>
+    <div id="hidden-muito" class="hidden-text">É o que você significa para mim.</div>
+    <div id="hidden-casar" class="hidden-text">Em quanto esse jogo ficar de pé, é oficial hehehe.</div>
+    <div id="hidden-buceta" class="hidden-text">Vai orar ksksks</div>
+    <script>
+        const words = ['duck', 'duda', 'linda', 'muito', 'casar', 'buceta'];
+        
+        const grid = [
+            'g', 'o','t','o','s','a','h','b','o','v',
+            'z','d','b','v','a','d','t','s','c','b',
+            'g','y','u','z','k','u','n','q','w','l',
+            'k','j','f','c','t','e','u','v','b','i',
+            'i','d','p','i','k','e','c','u','p','n',
+            'g','u','s','w','e','r','p','a','x','d',
+            'v','d','u','n','b','u','c','e','t','a',
+            'r','a','s','a','c','v','g','o','z','a',
+            'c','h','u','p','a','r','m','j','d','f',
+            'g','f','b','i','m','u','i','t','o','p',
+            'a','m','o','r','v','t','d','u','g','j',
+            'r','e','a','l','m','n','h','l','i','v',
+
+
+        ];
+        
+        const wordSearch = document.querySelector('.word-search');
+
+        grid.forEach((letter, index) => {
+            const cell = document.createElement('div');
+            cell.textContent = letter;
+            cell.dataset.index = index;
+            wordSearch.appendChild(cell);
+        });
+
+        let selectedCells = [];
+        let direction = null;
+        wordSearch.addEventListener('click', event => {
+            const target = event.target;
+            if (target.tagName !== 'DIV') return;
+
+            const index = Number(target.dataset.index);
+            if (selectedCells.length === 0) {
+                selectedCells.push(index);
+                target.classList.add('active');
+            } else {
+                const lastIndex = selectedCells[selectedCells.length - 1];
+                if (direction === null) {
+                    direction = getDirection(lastIndex, index);
+                }
+                if (isAdjacent(lastIndex, index, direction)) {
+                    target.classList.toggle('active');
+                    if (selectedCells.includes(index)) {
+                        selectedCells = selectedCells.filter(i => i !== index);
+                        direction = selectedCells.length > 1 ? getDirection(selectedCells[selectedCells.length - 2], selectedCells[selectedCells.length - 1]) : null;
+                    } else {
+                        selectedCells.push(index);
+                    }
+                    checkWords();
+                } else {
+                    clearSelection();
+                }
+            }
+        });
+
+        function isAdjacent(index1, index2, direction) {
+            const x1 = index1 % 10;
+            const y1 = Math.floor(index1 / 10);
+            const x2 = index2 % 10;
+            const y2 = Math.floor(index2 / 10);
+
+            switch (direction) {
+                case 'horizontal':
+                    return y1 === y2 && Math.abs(x1 - x2) === 1;
+                case 'vertical':
+                    return x1 === x2 && Math.abs(y1 - y2) === 1;
+                case 'diagonal':
+                    return Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1;
+                default:
+                    return false;
+            }
+        }
+
+        function getDirection(index1, index2) {
+            const x1 = index1 % 10;
+            const y1 = Math.floor(index1 / 10);
+            const x2 = index2 % 10;
+            const y2 = Math.floor(index2 / 10);
+
+            if (x1 === x2) return 'vertical';
+            if (y1 === y2) return 'horizontal';
+            if (Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 1) return 'diagonal';
+            return null;
+        }
+
+        function clearSelection() {
+            selectedCells.forEach(index => {
+                const cell = wordSearch.querySelector(`div[data-index="${index}"]`);
+                cell.classList.remove('active');
+            });
+            selectedCells = [];
+            direction = null;
+        }
+
+        function checkWords() {
+            words.forEach(word => {
+                const indices = getWordIndices(word);
+                if (indices.length > 0 && indices.every(index => selectedCells.includes(index))) {
+                    indices.forEach(index => {
+                        const cell = wordSearch.querySelector(`div[data-index="${index}"]`);
+                        cell.classList.remove('active');
+                        cell.classList.add('correct');
+                    });
+
+                    const foundWord = document.querySelector(`.found-words li[data-word="${word}"]`);
+                    foundWord.classList.add('found');
+
+                    document.getElementById(`hidden-${word}`).classList.add('visible');
+                    clearSelection();
+                }
+            });
+        }
+
+        function getWordIndices(word) {
+            const directions = [
+                { x: 1, y: 0 },   // Horizontal direita
+                { x: -1, y: 0 },  // Horizontal esquerda
+                { x: 0, y: 1 },   // Vertical para baixo
+                { x: 0, y: -1 },  // Vertical para cima
+                { x: 1, y: 1 },   // Diagonal direita para baixo
+                { x: -1, y: -1 }, // Diagonal esquerda para cima
+                { x: 1, y: -1 },  // Diagonal direita para cima
+                { x: -1, y: 1 }   // Diagonal esquerda para baixo
+            ];
+
+            for (let y = 0; y < 10; y++) {
+                for (let x = 0; x < 10; x++) {
+                    for (const direction of directions) {
+                        const indices = [];
+                        for (let i = 0; i < word.length; i++) {
+                            const newX = x + i * direction.x;
+                            const newY = y + i * direction.y;
+                            if (newX >= 0 && newX < 10 && newY >= 0 && newY < 10) {
+                                indices.push(newY * 10 + newX);
+                            } else {
+                                break;
+                            }
+                        }
+                        if (indices.length === word.length && indices.every((index, i) => grid[index] === word[i])) {
+                            return indices;
+                        }
+                    }
+                }
+            }
+            return [];
+        }
+    </script>
+</body>
+</html>
